@@ -7,12 +7,12 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog"
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+} from "../../components/ui/dialog.jsx"
+import { Button } from '../../components/ui/button.jsx'
+import { Input } from '../../components/ui/input.jsx'
 import { v4 as uuidv4 } from 'uuid';
 import { useNavigate } from 'react-router-dom'
-import GlobalApi from '@service/GlobalApi'
+import GlobalApi from '@/service/GlobalApi';
 
 function AddResume() {
     const [openDialog, setOpenDialog] = useState(false)
@@ -66,8 +66,8 @@ function AddResume() {
             <DialogHeader>
             <DialogTitle>Create New Resume</DialogTitle>
             <DialogDescription>
-                <p>Add a title for your new resume</p>
-                <Input className="my-2" 
+                Add a title for your new resume
+                <Input className="my-2 mt-2" 
                 placeholder="Ex.Full Stack resume"
                 onChange={(e)=>setResumeTitle(e.target.value)}
                 />

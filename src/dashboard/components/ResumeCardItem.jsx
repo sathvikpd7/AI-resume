@@ -8,7 +8,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "../../components/ui/dropdown-menu.jsx"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import GlobalApi from "@service/GlobalApi";
+import GlobalApi from '@/service/GlobalApi';
 import { toast } from 'sonner'
 
 function ResumeCardItem({resume,refreshData}) {

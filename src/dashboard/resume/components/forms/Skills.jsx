@@ -6,7 +6,7 @@ import '@smastrom/react-rating/style.css'
 import { Button } from '@/components/ui/button'
 import { LoaderCircle } from 'lucide-react'
 import { ResumeInfoContext } from '@/context/ResumeInfoContext'
-import GlobalApi from '@service/GlobalApi'
+import GlobalApi from '@/service/GlobalApi'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 function Skills() {

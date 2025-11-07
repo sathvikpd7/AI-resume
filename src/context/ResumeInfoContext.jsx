@@ -1,35 +1,36 @@
-import { createContext, useCallback, useRef, useState } from "react";
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export const ResumeInfoContext = createContext({
-  state: null,
-  setState: () => {}
+  resumeInfo: null,
+  setResumeInfo: () => {},
+  getResumeInfo: () => null,
 });
 
 export function ResumeInfoProvider({ children, initialValue = null }) {
-  const [state, _setState] = useState(initialValue);
-  const stateRef = useRef(state);
+  const [resumeInfo, setResumeInfoState] = useState(initialValue);
+  const resumeInfoRef = useRef(resumeInfo);
 
-  // Update both state and ref
-  const setState = useCallback((newState) => {
-    stateRef.current = typeof newState === 'function' 
-      ? newState(stateRef.current) 
-      : newState;
-    _setState(stateRef.current);
+  const setResumeInfo = useCallback((nextValue) => {
+    resumeInfoRef.current = typeof nextValue === 'function'
+      ? nextValue(resumeInfoRef.current)
+      : nextValue;
+    setResumeInfoState(resumeInfoRef.current);
   }, []);
 
-  // Create a stable context value
-  const contextValue = useRef({
-    state,
-    setState,
-    // Add a way to get the current state without causing re-renders
-    getState: () => stateRef.current
-  });
+  const contextValue = useMemo(() => ({
+    resumeInfo,
+    setResumeInfo,
+    getResumeInfo: () => resumeInfoRef.current,
+  }), [resumeInfo, setResumeInfo]);
 
-  // Update the context value when state changes
-  contextValue.current.state = state;
+  useEffect(() => {
+    if (initialValue !== null && initialValue !== undefined) {
+      setResumeInfo(initialValue);
+    }
+  }, [initialValue, setResumeInfo]);
 
   return (
-    <ResumeInfoContext.Provider value={contextValue.current}>
+    <ResumeInfoContext.Provider value={contextValue}>
       {children}
     </ResumeInfoContext.Provider>
   );

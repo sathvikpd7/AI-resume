@@ -1,103 +1,99 @@
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { ResumeInfoContext } from '@/context/ResumeInfoContext'
-import { LoaderCircle } from 'lucide-react';
-import React, { useContext, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ResumeInfoContext } from '@/context/ResumeInfoContext';
 import GlobalApi from '@/service/GlobalApi';
+import { LoaderCircle } from 'lucide-react';
+import { useContext, useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-function PersonalDetail({enabledNext}) {
+const EMPTY_FORM = {
+  firstName: '',
+  lastName: '',
+  jobTitle: '',
+  address: '',
+  phone: '',
+  email: '',
+};
 
-    const params=useParams();
-    const {resumeInfo,setResumeInfo}=useContext(ResumeInfoContext)
+function PersonalDetail({ enabledNext = () => {} }) {
+  const params = useParams();
+  const { resumeInfo, setResumeInfo } = useContext(ResumeInfoContext);
+  const [formData, setFormData] = useState(() => ({ ...EMPTY_FORM, ...resumeInfo }));
+  const [loading, setLoading] = useState(false);
 
-    const [formData,setFormData]=useState();
-    const [loading,setLoading]=useState(false);
-    useEffect(()=>{
-        console.log("---",resumeInfo)
-    },[])
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, ...resumeInfo }));
+  }, [resumeInfo]);
 
-    const handleInputChange=(e)=>{
-        enabledNext(false)
-        const {name,value}=e.target;
+  const handleInputChange = (e) => {
+    enabledNext(false);
+    const { name, value } = e.target;
 
-        setFormData({
-            ...formData,
-            [name]:value
-        })
-        setResumeInfo({
-            ...resumeInfo,
-            [name]:value
-        })
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setResumeInfo((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const onSave = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await GlobalApi.UpdateResumeDetail(params?.resumeId, {
+        data: formData,
+      });
+      toast('Details updated');
+      enabledNext(true);
+    } catch (error) {
+      toast.error('Unable to save personal details');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const onSave=(e)=>{
-        e.preventDefault();
-        setLoading(true)
-        const data={
-            data:formData
-        }
-        GlobalApi.UpdateResumeDetail(params?.resumeId,data).then(resp=>{
-            console.log(resp);
-            enabledNext(true);
-            setLoading(false);
-            toast("Details updated")
-        },(error)=>{
-            setLoading(false);
-        })
-        
-    }
+  const fields = useMemo(() => ([
+    { name: 'firstName', label: 'First Name' },
+    { name: 'lastName', label: 'Last Name' },
+    { name: 'jobTitle', label: 'Job Title', colSpan: 2 },
+    { name: 'address', label: 'Address', colSpan: 2 },
+    { name: 'phone', label: 'Phone' },
+    { name: 'email', label: 'Email' },
+  ]), []);
+
   return (
-    <div className='p-5 shadow-lg rounded-lg border-t-primary border-t-4 mt-10'>
-        <h2 className='font-bold text-lg'>Personal Detail</h2>
-        <p>Get Started with the basic information</p>
+    <div className='mt-10 rounded-lg border-t-4 border-t-primary p-5 shadow-lg'>
+      <h2 className='text-lg font-bold'>Personal Detail</h2>
+      <p>Get started with the basic information</p>
 
-        <form onSubmit={onSave}>
-            <div className='grid grid-cols-2 mt-5 gap-3'>
-                <div>
-                    <label className='text-sm'>First Name</label>
-                    <Input name="firstName" defaultValue={resumeInfo?.firstName} required onChange={handleInputChange}  />
-                </div>
-                <div>
-                    <label className='text-sm'>Last Name</label>
-                    <Input name="lastName" required onChange={handleInputChange} 
-                    defaultValue={resumeInfo?.lastName} />
-                </div>
-                <div className='col-span-2'>
-                    <label className='text-sm'>Job Title</label>
-                    <Input name="jobTitle" required 
-                    defaultValue={resumeInfo?.jobTitle}
-                    onChange={handleInputChange}  />
-                </div>
-                <div className='col-span-2'>
-                    <label className='text-sm'>Address</label>
-                    <Input name="address" required 
-                    defaultValue={resumeInfo?.address}
-                    onChange={handleInputChange}  />
-                </div>
-                <div>
-                    <label className='text-sm'>Phone</label>
-                    <Input name="phone" required 
-                    defaultValue={resumeInfo?.phone}
-                    onChange={handleInputChange}  />
-                </div>
-                <div>
-                    <label className='text-sm'>Email</label>
-                    <Input name="email" required 
-                    defaultValue={resumeInfo?.email}
-                    onChange={handleInputChange}  />
-                </div>
+      <form onSubmit={onSave}>
+        <div className='mt-5 grid grid-cols-2 gap-3'>
+          {fields.map(({ name, label, colSpan }) => (
+            <div key={name} className={colSpan === 2 ? 'col-span-2' : undefined}>
+              <label className='text-sm'>{label}</label>
+              <Input
+                name={name}
+                value={formData[name] ?? ''}
+                required
+                onChange={handleInputChange}
+                type={name.includes('email') ? 'email' : name.includes('phone') ? 'tel' : 'text'}
+              />
             </div>
-            <div className='mt-3 flex justify-end'>
-                <Button type="submit"
-                disabled={loading}>
-                    {loading?<LoaderCircle className='animate-spin' />:'Save'}
-                    </Button>
-            </div>
-        </form>
+          ))}
+        </div>
+        <div className='mt-3 flex justify-end'>
+          <Button type="submit" disabled={loading}>
+            {loading ? <LoaderCircle className='animate-spin' /> : 'Save'}
+          </Button>
+        </div>
+      </form>
     </div>
-  )
+  );
 }
 
-export default PersonalDetail
+export default PersonalDetail;

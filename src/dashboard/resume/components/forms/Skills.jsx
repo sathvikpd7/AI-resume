@@ -1,112 +1,114 @@
-import { Input } from '@/components/ui/input'
-import React, { useContext, useEffect, useState } from 'react'
-import { Rating } from '@smastrom/react-rating'
+import '@smastrom/react-rating/style.css';
 
-import '@smastrom/react-rating/style.css'
-import { Button } from '@/components/ui/button'
-import { LoaderCircle } from 'lucide-react'
-import { ResumeInfoContext } from '@/context/ResumeInfoContext'
-import GlobalApi from '@/service/GlobalApi'
-import { useParams } from 'react-router-dom'
-import { toast } from 'sonner'
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ResumeInfoContext } from '@/context/ResumeInfoContext';
+import GlobalApi from '@/service/GlobalApi';
+import { Rating } from '@smastrom/react-rating';
+import { LoaderCircle } from 'lucide-react';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
+
+const EMPTY_SKILL = { name: '', rating: 0 };
+
 function Skills() {
+  const { resumeId } = useParams();
+  const { resumeInfo, setResumeInfo } = useContext(ResumeInfoContext);
+  const [skillsList, setSkillsList] = useState(() =>
+    resumeInfo?.skills?.length ? resumeInfo.skills : [{ ...EMPTY_SKILL }]
+  );
+  const [loading, setLoading] = useState(false);
 
-    const [skillsList,setSkillsList]=useState([{
-        name:'',
-        rating:0
-    }])
-    const {resumeId}=useParams();
-
-    const [loading,setLoading]=useState(false);
-    const {resumeInfo,setResumeInfo}=useContext(ResumeInfoContext);
-   
-    useEffect(()=>{
-        if (resumeInfo?.skills?.length > 0) {
-            setSkillsList(resumeInfo.skills);
-        } else {
-            // Initialize with one empty skill if none exists
-            setSkillsList([{
-                name: '',
-                rating: 0
-            }]);
-        }
-    }, [resumeInfo?.skills])
-   
-    const handleChange=(index,name,value)=>{
-        const newEntries=skillsList.slice();
-      
-        newEntries[index][name]=value;
-        setSkillsList(newEntries);
+  useEffect(() => {
+    if (resumeInfo?.skills) {
+      setSkillsList(
+        resumeInfo.skills.length ? resumeInfo.skills : [{ ...EMPTY_SKILL }]
+      );
     }
+  }, [resumeInfo?.skills]);
 
-    const AddNewSkills=()=>{
-        setSkillsList([...skillsList,{
-            name:'',
-        rating:0 
-        }])
+  useEffect(() => {
+    setResumeInfo((prev) => ({
+      ...prev,
+      skills: skillsList,
+    }));
+  }, [skillsList, setResumeInfo]);
+
+  const handleChange = useCallback((index, key, value) => {
+    setSkillsList((prev) => {
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        [key]: value,
+      };
+      return next;
+    });
+  }, []);
+
+  const addSkill = useCallback(() => {
+    setSkillsList((prev) => [...prev, { ...EMPTY_SKILL }]);
+  }, []);
+
+  const removeSkill = useCallback(() => {
+    setSkillsList((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
+  }, []);
+
+  const onSave = async () => {
+    if (!resumeId) return;
+    setLoading(true);
+    try {
+      await GlobalApi.UpdateResumeDetail(resumeId, {
+        data: { skills: skillsList },
+      });
+      toast('Skills updated');
+    } catch (error) {
+      toast.error('Unable to save skills');
+    } finally {
+      setLoading(false);
     }
-    const RemoveSkills=()=>{
-        setSkillsList(skillsList=>skillsList.slice(0,-1))
-    }
+  };
 
-    const onSave=()=>{
-
-        setLoading(true);
-        const data={
-            data:{
-                skills:skillsList.map(({ id, ...rest }) => rest)
-            }
-        }
-
-        GlobalApi.UpdateResumeDetail(resumeId,data)
-        .then(resp=>{
-            console.log(resp);
-            setLoading(false);
-            toast('Details updated !')
-        },(error)=>{
-            setLoading(false);
-            toast('Server Error, Try again!')
-        })
-    }
-
-    useEffect(()=>{
-        setResumeInfo({
-            ...resumeInfo,
-            skills:skillsList
-        })
-    },[skillsList])
   return (
-    <div className='p-5 shadow-lg rounded-lg border-t-primary border-t-4 mt-10'>
-    <h2 className='font-bold text-lg'>Skills</h2>
-    <p>Add Your top professional key skills</p>
+    <div className='mt-10 rounded-lg border-t-4 border-t-primary p-5 shadow-lg'>
+      <h2 className='text-lg font-bold'>Skills</h2>
+      <p>Add your top professional key skills</p>
 
-    <div>
-        {skillsList?.map((item,index)=>(
-            <div key={index} className='flex justify-between mb-2 border rounded-lg p-3 '>
-                <div>
-                    <label className='text-xs'>Name</label>
-                    <Input className="w-full"
-                    defaultValue={item.name}
-                    onChange={(e)=>handleChange(index,'name',e.target.value)} />
-                </div>
-                <Rating style={{ maxWidth: 120 }} value={item.rating} 
-                onChange={(v)=>handleChange(index,'rating',v)}/>
-
+      <div>
+        {skillsList.map((item, index) => (
+          <div key={`skill-${index}`} className='mb-2 flex items-center justify-between rounded-lg border p-3'>
+            <div className='flex-1 pr-4'>
+              <label className='text-xs'>Name</label>
+              <Input
+                className='w-full'
+                value={item.name}
+                onChange={(event) => handleChange(index, 'name', event.target.value)}
+              />
             </div>
+            <Rating
+              style={{ maxWidth: 140 }}
+              value={item.rating}
+              onChange={(value) => handleChange(index, 'rating', value)}
+            />
+          </div>
         ))}
-    </div>
-    <div className='flex justify-between'>
-            <div className='flex gap-2'>
-            <Button variant="outline" onClick={AddNewSkills} className="text-primary"> + Add More Skill</Button>
-            <Button variant="outline" onClick={RemoveSkills} className="text-primary"> - Remove</Button>
+      </div>
 
-            </div>
-            <Button disabled={loading} onClick={()=>onSave()}>
-            {loading?<LoaderCircle className='animate-spin' />:'Save'}    
-            </Button>
+      <div className='flex justify-between'>
+        <div className='flex gap-2'>
+          <Button variant='outline' onClick={addSkill} className='text-primary'>
+            + Add Skill
+          </Button>
+          <Button variant='outline' onClick={removeSkill} className='text-primary'>
+            - Remove
+          </Button>
         </div>
+        <Button disabled={loading} onClick={onSave}>
+          {loading ? <LoaderCircle className='animate-spin' /> : 'Save'}
+        </Button>
+      </div>
     </div>
-  )
+  );
 }
 
-export default Skills
+export default Skills;

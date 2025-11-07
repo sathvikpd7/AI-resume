@@ -1,6 +1,9 @@
-import path from "path"
-import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+
+const rootDir = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
@@ -8,11 +11,11 @@ export default defineConfig({
     alias: [
       {
         find: '@',
-        replacement: path.resolve(__dirname, 'src')
+        replacement: resolve(rootDir, 'src')
       },
       {
         find: '@service',
-        replacement: path.resolve(__dirname, 'src/service')
+        replacement: resolve(rootDir, 'src/service')
       }
     ],
     extensions: ['.js', '.jsx', '.json']
